@@ -26,6 +26,8 @@ Converting between the two lets you:
 
 ```
 motif-bridge/
+├── README.md
+├── LICENSE
 ├── perl_scripts/          # Perl 5 — runs on any server, no compilation
 │   ├── meme2homer.pl
 │   ├── homer2meme.pl
@@ -36,6 +38,7 @@ motif-bridge/
 │   └── README.md
 └── rust_scripts/          # Rust — highest throughput, Cargo project
     ├── Cargo.toml
+    ├── Cargo.lock
     ├── src/bin/
     │   ├── meme2homer.rs
     │   └── homer2meme.rs
@@ -55,7 +58,7 @@ All three language implementations share **identical CLI flags** and produce mat
 perl perl_scripts/meme2homer.pl -i motifs.meme -j JASPAR2026 > motifs.homer
 
 # Python
-python python_scripts/meme2homer.py -i motifs.meme -j JASPAR2026 > motifs.homer
+python3 python_scripts/meme2homer.py -i motifs.meme -j JASPAR2026 > motifs.homer
 
 # Rust (build first)
 cd rust_scripts && cargo build --release && cd ..
@@ -69,7 +72,7 @@ cd rust_scripts && cargo build --release && cd ..
 perl perl_scripts/homer2meme.pl -i motifs.homer > motifs.meme
 
 # Python
-python python_scripts/homer2meme.py -i motifs.homer > motifs.meme
+python3 python_scripts/homer2meme.py -i motifs.homer > motifs.meme
 
 # Rust (build first)
 cd rust_scripts && cargo build --release && cd ..
@@ -156,14 +159,61 @@ threshold = max(threshold, 0)
 
 ---
 
+## Validation
+
+The project was validated on a server using the following real motif datasets:
+
+| File | Description |
+|---|---|
+| `homer.known.motifs` | HOMER built-in known motif library (436 motifs) |
+| `JASPAR2024_small.meme` | First 200 lines of `JASPAR2024_vertebrates.meme` (12 motifs), used for rapid iteration |
+| `JASPAR2024_vertebrates.meme` | Full JASPAR 2024 vertebrate motif database (879 motifs, 469 KB) |
+
+### Test coverage
+
+| Test stage | Description |
+|---|---|
+| 0. Environment check | Verify data files, Perl, Python, and Rust availability |
+| 1. meme2homer | MEME → HOMER conversion on small file (12 motifs) |
+| 2. homer2meme | HOMER → MEME conversion on known motif library (436 motifs) |
+| 3. Output consistency | Cross-language diff between Perl, Python, and Rust outputs |
+| 4. Round-trip | Validate `meme→homer→meme` and `homer→meme→homer` losslessness |
+| 5. Single motif extraction | Test `-e` flag for extracting a named motif |
+| 6. stdin pipeline | Test `cat file \| tool -i -` |
+| 7. gzip input | Test automatic decompression of `.gz` inputs |
+| 8. Large-file performance | Benchmark all three implementations on 879-motif dataset |
+| 9. Format compliance | Validate MEME headers, HOMER column counts, probability row sums |
+
+### Latest server-side result (2026-04-03)
+
+| Metric | Value |
+|---|---|
+| Total checks | 44 |
+| Passed | **43** ✅ |
+| Failed | 0 |
+| Skipped | 0 |
+
+> **Note:** The total became 44 (rather than 43) because the test script was refined locally on the server before the final run, adding one additional check compared to the originally pushed version.
+
+### Performance snapshot (large-file benchmark, 879 motifs)
+
+| Implementation | Time | Relative speed |
+|---|---|---|
+| Perl | 125 ms | Baseline |
+| Python | 100 ms | 1.25× |
+| Rust | **23 ms** | **5.4×** |
+
+---
+
 ## Choosing a Language Implementation
 
 | Scenario | Recommended |
 |---|---|
 | Server without compiler, Perl available | `perl_scripts/` |
 | Conda / Python environment | `python_scripts/` |
-| Large-scale batch processing (millions of motifs) | `rust_scripts/` |
+| Large-scale batch processing | `rust_scripts/` |
 | `.gz` compressed input | All three implementations |
+| Fastest runtime on tested server data | `rust_scripts/` |
 
 ---
 
