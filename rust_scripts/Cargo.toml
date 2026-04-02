@@ -1,0 +1,21 @@
+[package]
+name = "motif-bridge"
+version = "0.1.0"
+edition = "2021"
+description = "Cross-language toolkit for converting motifs between MEME and HOMER formats"
+license = "MIT"
+repository = "https://github.com/hzauzengyuanzhao/motif-bridge"
+authors = ["Zengyuan Zhao"]
+keywords = ["bioinformatics", "motif", "MEME", "HOMER", "ChIP-seq"]
+categories = ["command-line-utilities", "science"]
+
+[dependencies]
+flate2 = "1"
+
+[[bin]]
+name = "meme2homer"
+path = "src/bin/meme2homer.rs"
+
+[[bin]]
+name = "homer2meme"
+path = "src/bin/homer2meme.rs"
