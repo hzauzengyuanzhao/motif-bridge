@@ -184,7 +184,7 @@ The project was validated on a server using the following real motif datasets:
 | 8. Large-file performance | Benchmark all three implementations on 879-motif dataset |
 | 9. Format compliance | Validate MEME headers, HOMER column counts, probability row sums |
 
-### Latest server-side result (2026-04-03)
+### Latest server-side result
 
 | Metric | Value |
 |---|---|
