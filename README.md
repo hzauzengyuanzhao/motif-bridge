@@ -6,7 +6,9 @@
 
 A cross-language toolkit for bridging the **MEME** and **HOMER** motif analysis ecosystems.
 
-MEME and HOMER are the two dominant platforms for ChIP-seq motif analysis, but their motif file formats are fundamentally incompatible. This project provides bidirectional, lossless conversion tools implemented in **Perl**, **Python**, and **Rust**, allowing seamless interoperability between the two ecosystems.
+MEME and HOMER are widely used platforms for motif analysis, but their motif file formats are not directly interoperable. This project provides bidirectional motif matrix conversion tools implemented in **Perl**, **Python**, and **Rust**, allowing users to move standard DNA motif matrices between the two ecosystems.
+
+The converters preserve motif matrix content for standard A/C/G/T motifs after numeric formatting. Some format-specific metadata, such as HOMER log-p, pseudo-counts, sites, and MEME `nsites` or `E` values, may be regenerated or set to documented defaults during conversion.
 
 ---
 
@@ -29,14 +31,14 @@ cargo install motif-bridge
 ### From source
 
 ```bash
-git clone https://github.com/hzauzengyuanzhao/motif-bridge
+git clone https://github.com/zengyuanzhao/motif-bridge
 cd motif-bridge/rust_scripts
 cargo build --release
 # Produces: target/release/meme2homer
 #           target/release/homer2meme
 ```
 
-For the Perl and Python implementations, no installation is needed — scripts can be run directly.
+For the Perl and Python implementations, no installation is needed. The scripts can be run directly.
 
 ---
 
@@ -44,7 +46,7 @@ For the Perl and Python implementations, no installation is needed — scripts c
 
 | | MEME Suite | HOMER |
 |---|---|---|
-| **Motif format** | `.meme` — probability matrix with header block | `.motif` — log-odds or probability, tab-separated |
+| **Motif format** | `.meme`, probability matrix with header block | `.motif`, log-odds or probability, tab-separated |
 | **Threshold** | E-value / p-value based | Per-motif log-odds score |
 | **Typical use** | *de novo* motif discovery, FIMO scanning | ChIP-seq peak annotation, known motif enrichment |
 | **Downstream tools** | FIMO, MAST, TOMTOM | `findMotifsGenome.pl`, `annotatePeaks.pl` |
@@ -52,7 +54,7 @@ For the Perl and Python implementations, no installation is needed — scripts c
 Converting between the two lets you:
 - Use MEME-discovered motifs directly in HOMER annotation pipelines
 - Scan HOMER motif databases with FIMO/MAST
-- Build unified motif databases (e.g., JASPAR → both platforms)
+- Build unified motif databases (e.g., JASPAR to both platforms)
 
 ---
 
@@ -62,15 +64,15 @@ Converting between the two lets you:
 motif-bridge/
 ├── README.md
 ├── LICENSE
-├── perl_scripts/          # Perl 5 — runs on any server, no compilation
+├── perl_scripts/          # Perl 5, runs on most servers without compilation
 │   ├── meme2homer.pl
 │   ├── homer2meme.pl
 │   └── README.md
-├── python_scripts/        # Python 3.6+ — zero external dependencies
+├── python_scripts/        # Python 3.6+, zero external dependencies
 │   ├── meme2homer.py
 │   ├── homer2meme.py
 │   └── README.md
-└── rust_scripts/          # Rust — highest throughput, Cargo project
+└── rust_scripts/          # Rust implementation, Cargo project
     ├── Cargo.toml
     ├── Cargo.lock
     ├── src/bin/
@@ -79,7 +81,7 @@ motif-bridge/
     └── README.md
 ```
 
-All three language implementations share **identical CLI flags** and produce matching output for valid MEME/HOMER inputs — choose the one that fits your environment.
+All three language implementations share the same main CLI flags and are intended to produce matching output for valid standard DNA MEME/HOMER inputs. Choose the implementation that fits your environment.
 
 ---
 
@@ -133,7 +135,7 @@ cd rust_scripts && cargo build --release && cd ..
 | `-e <string>` | Extract only the specified motif by ID or name | *(all motifs)* |
 | `-b <float>` | Background nucleotide probability | `0.25` |
 | `-t <float>` | Threshold offset subtracted from log-odds score (log2 bits) | `4.0` |
-| `-h` | Show help | — |
+| `-h` | Show help | |
 
 ### homer2meme (all implementations)
 
@@ -141,8 +143,8 @@ cd rust_scripts && cargo build --release && cd ..
 |---|---|---|
 | `-i <file>` | Input HOMER motif file (`-` for stdin, `.gz` supported) | *(required)* |
 | `-e <string>` | Extract only the specified motif by ID or description | *(all motifs)* |
-| `-a <float>` | Pseudocount for log-odds → probability conversion | `0.01` |
-| `-h` | Show help | — |
+| `-a <float>` | Pseudocount for log-odds to probability conversion | `0.01` |
+| `-h` | Show help | |
 
 Note: `homer2meme` auto-detects log-odds vs probability rows by checking whether row sum is near 1.0 (`[0.98, 1.02]`). This is a practical heuristic and may be ambiguous for edge-case inputs whose log-odds rows also sum near 1.0.
 
@@ -181,9 +183,23 @@ HOMER header fields: `>id \t description \t threshold \t log-p \t pseudo \t site
 
 The **threshold score** is computed as:
 ```
-threshold = sum_over_positions( log2(max_prob / background) ) − t_offset
+threshold = sum_over_positions( log2(max_prob / background) ) - t_offset
 threshold = max(threshold, 0)
 ```
+
+---
+
+## Metadata and Round-trip Limits
+
+The current converters focus on standard DNA motif matrices. During conversion, some metadata fields are written as defaults:
+
+| Direction | Metadata behavior |
+|---|---|
+| MEME to HOMER | HOMER `log-p`, `pseudo`, and `sites` are written as `0`; threshold is recalculated from the matrix |
+| HOMER to MEME | MEME `nsites` is written as `20`; `E` is written as `0` |
+| Both directions | Matrix values are printed to six decimal places |
+
+For this reason, round-trip conversion should be interpreted as matrix-level consistency rather than byte-for-byte recovery of the original file.
 
 ---
 
@@ -202,12 +218,12 @@ The project was validated on a server using the following real motif datasets:
 | Test stage | Description |
 |---|---|
 | 0. Environment check | Verify data files, Perl, Python, and Rust availability |
-| 1. meme2homer | MEME → HOMER conversion on small file (12 motifs) |
-| 2. homer2meme | HOMER → MEME conversion on known motif library (436 motifs) |
+| 1. meme2homer | MEME to HOMER conversion on small file (12 motifs) |
+| 2. homer2meme | HOMER to MEME conversion on known motif library (436 motifs) |
 | 3. Output consistency | Cross-language diff between Perl, Python, and Rust outputs |
-| 4. Round-trip | Validate `meme→homer→meme` and `homer→meme→homer` losslessness |
+| 4. Round-trip | Validate matrix-level consistency for `meme→homer→meme` and `homer→meme→homer` conversions |
 | 5. Single motif extraction | Test `-e` flag for extracting a named motif |
-| 6. stdin pipeline | Test `cat file \| tool -i -` |
+| 6. stdin pipeline | Test `cat file | tool -i -` |
 | 7. gzip input | Test automatic decompression of `.gz` inputs |
 | 8. Large-file performance | Benchmark all three implementations on 879-motif dataset |
 | 9. Format compliance | Validate MEME headers, HOMER column counts, probability row sums |
