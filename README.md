@@ -66,19 +66,16 @@ motif-bridge/
 ├── LICENSE
 ├── perl_scripts/          # Perl 5, runs on most servers without compilation
 │   ├── meme2homer.pl
-│   ├── homer2meme.pl
-│   └── README.md
+│   └── homer2meme.pl
 ├── python_scripts/        # Python 3.6+, zero external dependencies
 │   ├── meme2homer.py
-│   ├── homer2meme.py
-│   └── README.md
+│   └── homer2meme.py
 └── rust_scripts/          # Rust implementation, Cargo project
     ├── Cargo.toml
     ├── Cargo.lock
-    ├── src/bin/
-    │   ├── meme2homer.rs
-    │   └── homer2meme.rs
-    └── README.md
+    └── src/bin/
+        ├── meme2homer.rs
+        └── homer2meme.rs
 ```
 
 All three language implementations share the same main CLI flags and are intended to produce matching output for valid standard DNA MEME/HOMER inputs. Choose the implementation that fits your environment.
